@@ -291,7 +291,7 @@ export default function PatternComponent() {
               <Button
                 variant="link"
                 onClick={() => handleRemovePaletteColor('x')}
-                disabled={xPalette === 0}
+                disabled={xPalette.length === 0}
               >
                 <span className="icon icon-squared-minus">➖</span>
               </Button>
