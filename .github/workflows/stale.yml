@@ -7,21 +7,20 @@ name: Mark stale issues and pull requests
 
 on:
   schedule:
-  - cron: '42 17 * * *'
+    - cron: '42 17 * * *'
 
 jobs:
   stale:
-
     runs-on: ubuntu-latest
     permissions:
       issues: write
       pull-requests: write
 
     steps:
-    - uses: actions/stale@v5
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        stale-issue-message: 'This issue has been inactive for a while. Please update the issue if it is still relevant.'
-        stale-pr-message: 'This pull request has been inactive for a while. Please update the pull request if it is still relevant.'
-        stale-issue-label: 'no-issue-activity'
-        stale-pr-label: 'no-pr-activity'
+      - uses: actions/stale@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: 'This issue has been inactive for a while. Please update the issue if it is still relevant.'
+          stale-pr-message: 'This pull request has been inactive for a while. Please update the pull request if it is still relevant.'
+          stale-issue-label: 'no-issue-activity'
+          stale-pr-label: 'no-pr-activity'
