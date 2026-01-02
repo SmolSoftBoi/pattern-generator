@@ -29,6 +29,8 @@ Install the dependencies:
 yarn install
 ```
 
+This project uses **Yarn** as the canonical package manager and `yarn.lock` as the canonical lockfile.
+
 Run the development server:
 
 ```bash
@@ -36,6 +38,17 @@ yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Dependency maintenance
+
+This repository uses Dependabot for predictable, low-noise dependency updates.
+
+- Config: `.github/dependabot.yml`
+- Cadence: weekly (Monday 07:30, Europe/London)
+- Ecosystems: npm (JavaScript deps at repo root) + GitHub Actions
+- Labels: `dependencies`
+- Commit prefixes: `deps` (JavaScript) and `ci` (GitHub Actions), both including scope
+- Grouping: JavaScript non-major updates are grouped into prod vs dev PRs
 
 ## Usage
 
