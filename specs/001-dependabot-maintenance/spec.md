@@ -15,6 +15,12 @@
 - Q: Labels → A: Apply `dependencies` label to all Dependabot PRs.
 - Q: Commit message prefixes → A: Use `deps` for JavaScript dependency updates and `ci` for GitHub Actions updates (include scope).
 
+#### Audit notes
+
+- `.github/dependabot.yml` is valid YAML and matches the required setup (two ecosystems: `npm` + `github-actions`; weekly Mon 07:30 Europe/London; PR limit 5; label `dependencies`; commit prefixes `deps`/`ci`; grouping for JS non-major prod/dev).
+- The repo previously contained both `yarn.lock` and `package-lock.json`, and `.github/workflows/nextjs.yml` referenced `package-lock.json` in cache keys.
+- Resolution implemented: remove `package-lock.json`, update workflow cache keys to hash `yarn.lock` only, and add CI YAML linting for `.github/dependabot.yml`.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Predictable weekly dependency PRs (Priority: P1)

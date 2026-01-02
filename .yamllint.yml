@@ -1,0 +1,20 @@
+extends: default
+
+yaml-files:
+  - '*.yml'
+  - '*.yaml'
+  - '.yamllint'
+
+rules:
+  # Allow files without an explicit '---' document start.
+  document-start:
+    present: false
+
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+
+  trailing-spaces: enable
+
+  # Avoid bikeshedding; keep the check stable.
+  line-length: disable

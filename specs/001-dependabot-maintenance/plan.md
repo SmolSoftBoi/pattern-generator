@@ -29,16 +29,13 @@ Keep dependency updates predictable and low-noise by configuring Dependabot to:
   - Weekly schedule + PR limit
   - Labels + commit message conventions
 - Align repository docs/spec notes about maintenance conventions
-
-### Optional / follow-ups
-
-- Add CI validation for `.github/dependabot.yml` (optional hardening) to catch malformed YAML earlier.
+- Add CI validation for `.github/dependabot.yml` to catch malformed YAML earlier.
 
 ## Project Structure (relevant paths)
 
 - Dependabot config: `.github/dependabot.yml`
 - Workflows: `.github/workflows/*.yml`
-- Node deps: `package.json`, `yarn.lock` (and potentially `package-lock.json`)
+- Node deps: `package.json`, `yarn.lock`
 - Feature docs: `specs/001-dependabot-maintenance/*`
 
 ## Validation
