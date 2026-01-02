@@ -1,7 +1,7 @@
-# Feature Specification: [FEATURE NAME]
+# Feature Specification: Dependabot Maintenance
 
-**Feature Branch**: `[###-feature-name]`  
-**Created**: [DATE]  
+**Feature Branch**: `001-dependabot-maintenance`  
+**Created**: 2026-01-02  
 **Status**: Draft  
 **Input**: User description: "$ARGUMENTS"
 
@@ -10,121 +10,90 @@
 ### Session 2026-01-02
 
 - Q: Lockfile & package manager policy → A: Standardize on Yarn (keep `yarn.lock`; remove/ignore `package-lock.json`).
-- Q: Major version update strategy → A: Group major updates into a single PR per ecosystem.
 - Q: Weekly schedule timing → A: Mondays 07:30 Europe/London.
-- Q: Commit message prefix scheme → A: Split by ecosystem (`chore(deps)` for JS; `chore(deps-actions)` for Actions).
+- Q: Update grouping strategy → A: Group JavaScript **non-major** updates into two PRs (prod vs dev). Major updates are **not grouped**.
+- Q: Labels → A: Apply `dependencies` label to all Dependabot PRs.
+- Q: Commit message prefixes → A: Use `deps` for JavaScript dependency updates and `ci` for GitHub Actions updates (include scope).
 
 ## User Scenarios & Testing *(mandatory)*
 
-<!--
-  IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
-  Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
-  you should still have a viable MVP (Minimum Viable Product) that delivers value.
-  
-  Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
-  Think of each story as a standalone slice of functionality that can be:
-  - Developed independently
-  - Tested independently
-  - Deployed independently
-  - Demonstrated to users independently
--->
+### User Story 1 - Predictable weekly dependency PRs (Priority: P1)
 
-### User Story 1 - [Brief Title] (Priority: P1)
+As a maintainer, I want Dependabot to open a small and predictable set of weekly PRs for JavaScript dependencies and GitHub Actions so dependency upkeep is routine and low-noise.
 
-[Describe this user journey in plain language]
+**Why this priority**: This is the core value of the feature: predictable maintenance without PR spam.
 
-**Why this priority**: [Explain the value and why it has this priority level]
-
-**Independent Test**: [Describe how this can be tested independently - e.g., "Can be fully tested by [specific action] and delivers [specific value]"]
+**Independent Test**: Validate that `.github/dependabot.yml` contains the expected ecosystems, schedule, grouping, labels, and commit message conventions.
 
 **Acceptance Scenarios**:
 
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
-2. **Given** [initial state], **When** [action], **Then** [expected outcome]
+1. **Given** the repository has `.github/dependabot.yml`, **When** I inspect the `updates` config, **Then** it contains exactly two entries: `package-ecosystem: "npm"` and `package-ecosystem: "github-actions"`, both with `directory: "/"`.
+2. **Given** the Dependabot config, **When** I inspect the schedule, **Then** both ecosystems run `weekly` on `monday` at `07:30` with timezone `Europe/London` and `open-pull-requests-limit: 5`.
+3. **Given** the JavaScript (`npm`) config, **When** I inspect grouping, **Then** it defines two groups `js-prod-non-major` and `js-dev-non-major` that include only `minor` and `patch` updates.
+4. **Given** the config, **When** I inspect metadata conventions, **Then** both ecosystems apply label `dependencies` and use commit prefixes `deps` (npm) and `ci` (github-actions) with `include: scope`.
 
 ---
 
-### User Story 2 - [Brief Title] (Priority: P2)
+### User Story 2 - Canonical lockfile to avoid conflicting updates (Priority: P2)
 
-[Describe this user journey in plain language]
+As a maintainer, I want the repo to use a single canonical lockfile so dependency automation doesn’t create conflicting PRs or unpredictable install behavior.
 
-**Why this priority**: [Explain the value and why it has this priority level]
+**Why this priority**: Multiple lockfiles commonly cause conflicting update PRs and non-deterministic installs.
 
-**Independent Test**: [Describe how this can be tested independently]
+**Independent Test**: Confirm the repo uses Yarn and `package-lock.json` is not present/referenced.
 
 **Acceptance Scenarios**:
 
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+1. **Given** the repository root, **When** I check for lockfiles, **Then** `yarn.lock` exists and `package-lock.json` does not.
+2. **Given** CI workflows, **When** I inspect `.github/workflows/nextjs.yml`, **Then** caching/hash keys do not reference `package-lock.json`.
 
 ---
 
-### User Story 3 - [Brief Title] (Priority: P3)
+### User Story 3 - Prevent config drift with CI validation (Priority: P3)
 
-[Describe this user journey in plain language]
+As a maintainer, I want CI to catch invalid or malformed Dependabot configuration so automation stays reliable.
 
-**Why this priority**: [Explain the value and why it has this priority level]
+**Why this priority**: This is a low-cost quality gate that prevents silent breakage.
 
-**Independent Test**: [Describe how this can be tested independently]
+**Independent Test**: Introduce an invalid YAML change to `.github/dependabot.yml` in a branch and confirm CI fails.
 
 **Acceptance Scenarios**:
 
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+1. **Given** a pull request changes `.github/dependabot.yml`, **When** the CI check runs, **Then** it fails if the YAML is invalid.
 
 ---
-
-[Add more user stories as needed, each with an assigned priority]
 
 ### Edge Cases
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right edge cases.
--->
-
-- What happens when [boundary condition]?
-- How does system handle [error scenario]?
+- Multiple lockfiles present (e.g., `yarn.lock` + `package-lock.json`) causing conflicting updates.
+- Major version updates producing more PRs than expected (acceptable; non-major updates are grouped to reduce noise).
+- Invalid YAML/unsupported keys in `.github/dependabot.yml` preventing Dependabot from running.
 
 ## Requirements *(mandatory)*
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right functional requirements.
--->
-
 ### Functional Requirements
 
-- **FR-DB-001**: Repository MUST standardize on **Yarn** as the package manager for JavaScript dependency updates (canonical lockfile: `yarn.lock`).
-- **FR-DB-002**: Repository MUST NOT rely on `package-lock.json` (it should be removed or ignored to prevent conflicting/duplicate dependency update PRs).
-- **FR-DB-003**: Dependabot MUST group **major version** updates into a single PR per ecosystem (one for JavaScript dependencies; one for GitHub Actions).
-- **FR-DB-004**: Dependabot MUST run on a **weekly** cadence on **Mondays at 07:30** in the **Europe/London** timezone.
-- **FR-DB-005**: Dependabot PR commit messages MUST use prefix `chore(deps)` for JavaScript dependency updates and `chore(deps-actions)` for GitHub Actions updates.
-
-- **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
-- **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
-- **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
-- **FR-005**: System MUST [behavior, e.g., "log all security events"]
-
-*Example of marking unclear requirements:*
-
-- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
-- **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
-
-### Key Entities *(include if feature involves data)*
-
-- **[Entity 1]**: [What it represents, key attributes without implementation]
-- **[Entity 2]**: [What it represents, relationships to other entities]
+- **FR-DB-001**: Repository MUST standardize on **Yarn** for dependency installs (canonical lockfile: `yarn.lock`).
+- **FR-DB-002**: Repository MUST remove `package-lock.json` and MUST NOT reference it in CI/workflows.
+- **FR-DB-003**: Dependabot MUST manage JavaScript dependencies via `package-ecosystem: "npm"` in directory `/`.
+- **FR-DB-004**: Dependabot MUST manage GitHub Actions via `package-ecosystem: "github-actions"` in directory `/`.
+- **FR-DB-005**: Dependabot MUST run weekly on Mondays at 07:30 in timezone `Europe/London` for both ecosystems.
+- **FR-DB-006**: Dependabot MUST set `open-pull-requests-limit: 5` for both ecosystems.
+- **FR-DB-007**: Dependabot MUST group JavaScript non-major updates into:
+  - `js-prod-non-major` (`dependency-type: production`, `patterns: ["*"]`, `update-types: ["minor", "patch"]`)
+  - `js-dev-non-major` (`dependency-type: development`, `patterns: ["*"]`, `update-types: ["minor", "patch"]`)
+- **FR-DB-008**: Dependabot PRs MUST be labeled `dependencies`.
+- **FR-DB-009**: Dependabot commit messages MUST use:
+  - prefix `deps` for JavaScript dependency updates
+  - prefix `ci` for GitHub Actions updates
+  - and MUST include scope.
+- **FR-DB-010**: CI MUST validate `.github/dependabot.yml` on pull requests and fail on invalid YAML.
 
 ## Success Criteria *(mandatory)*
 
-<!--
-  ACTION REQUIRED: Define measurable success criteria.
-  These must be technology-agnostic and measurable.
--->
-
 ### Measurable Outcomes
 
-- **SC-001**: [Measurable metric, e.g., "Users can complete account creation in under 2 minutes"]
-- **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
-- **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
-- **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+- **SC-DB-001**: Dependabot creates no more than 5 open update PRs per ecosystem at any time (enforced by config).
+- **SC-DB-002**: All Dependabot PRs carry the `dependencies` label.
+- **SC-DB-003**: JavaScript non-major dependency updates are reduced to at most two PRs per update run (prod vs dev groups).
+- **SC-DB-004**: Invalid `.github/dependabot.yml` changes are caught by CI (workflow fails on malformed YAML).

@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # JavaScript dependencies (yarn v1 lockfile)
+  # JavaScript dependencies (Dependabot uses the "npm" ecosystem for both npm and Yarn)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -9,29 +9,29 @@ updates:
       time: "07:30"
       timezone: "Europe/London"
     open-pull-requests-limit: 5
-    rebase-strategy: "auto"
     labels:
       - "dependencies"
-      - "dependabot"
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "deps"
       include: "scope"
     groups:
-      production-minor-patch:
+      # Group non-major updates to reduce PR noise while keeping majors explicit.
+      js-prod-non-major:
         dependency-type: "production"
+        patterns:
+          - "*"
         update-types:
           - "minor"
           - "patch"
-      development-minor-patch:
+      js-dev-non-major:
         dependency-type: "development"
+        patterns:
+          - "*"
         update-types:
           - "minor"
           - "patch"
-      js-major:
-        update-types:
-          - "major"
 
-  # GitHub Actions
+  # GitHub Actions workflow dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -40,22 +40,8 @@ updates:
       time: "07:30"
       timezone: "Europe/London"
     open-pull-requests-limit: 5
-    rebase-strategy: "auto"
     labels:
       - "dependencies"
-      - "dependabot"
     commit-message:
-      prefix: "chore(deps-actions)"
+      prefix: "ci"
       include: "scope"
-    groups:
-      actions-minor-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-      actions-major:
-        patterns:
-          - "*"
-        update-types:
-          - "major"
