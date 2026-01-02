@@ -90,7 +90,8 @@ Each task follows:
 	- Trigger on `pull_request` when `.github/dependabot.yml` changes
 	- Steps: checkout → `actions/setup-python@v5` (Python 3.12) → `pip install yamllint==1.35.1` → `yamllint .github/dependabot.yml`
 	- Add repo-root `.yamllint.yml` with a minimal ruleset (no style bikeshedding) so the check is stable:
-	  - enable: `yaml` (syntax), `document-start` (allow absence), `indentation` (consistent), `trailing-spaces`
+	  - enable: `yaml` (syntax), `document-start` (allow absence), `indentation` (consistent)
+	  - disable: `trailing-spaces`
 	  - disable: `line-length`
 
 

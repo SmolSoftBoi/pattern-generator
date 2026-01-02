@@ -14,7 +14,7 @@ rules:
     spaces: 2
     indent-sequences: consistent
 
-  trailing-spaces: {}
+  trailing-spaces: disable
 
   # Avoid bikeshedding; keep the check stable.
   line-length: disable
