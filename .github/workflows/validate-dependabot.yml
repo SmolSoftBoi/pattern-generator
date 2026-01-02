@@ -5,6 +5,12 @@ on:
     paths:
       - '.github/dependabot.yml'
       - '.yamllint.yml'
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '.github/dependabot.yml'
+      - '.yamllint.yml'
 
 jobs:
   yamllint:
