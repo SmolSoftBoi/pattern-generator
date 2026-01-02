@@ -5,6 +5,15 @@
 **Status**: Draft  
 **Input**: User description: "$ARGUMENTS"
 
+## Clarifications
+
+### Session 2026-01-02
+
+- Q: Lockfile & package manager policy → A: Standardize on Yarn (keep `yarn.lock`; remove/ignore `package-lock.json`).
+- Q: Major version update strategy → A: Group major updates into a single PR per ecosystem.
+- Q: Weekly schedule timing → A: Mondays 07:30 Europe/London.
+- Q: Commit message prefix scheme → A: Split by ecosystem (`chore(deps)` for JS; `chore(deps-actions)` for Actions).
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
@@ -83,6 +92,12 @@
 -->
 
 ### Functional Requirements
+
+- **FR-DB-001**: Repository MUST standardize on **Yarn** as the package manager for JavaScript dependency updates (canonical lockfile: `yarn.lock`).
+- **FR-DB-002**: Repository MUST NOT rely on `package-lock.json` (it should be removed or ignored to prevent conflicting/duplicate dependency update PRs).
+- **FR-DB-003**: Dependabot MUST group **major version** updates into a single PR per ecosystem (one for JavaScript dependencies; one for GitHub Actions).
+- **FR-DB-004**: Dependabot MUST run on a **weekly** cadence on **Mondays at 07:30** in the **Europe/London** timezone.
+- **FR-DB-005**: Dependabot PR commit messages MUST use prefix `chore(deps)` for JavaScript dependency updates and `chore(deps-actions)` for GitHub Actions updates.
 
 - **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
 - **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  

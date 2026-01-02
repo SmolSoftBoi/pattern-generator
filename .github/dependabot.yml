@@ -45,7 +45,7 @@ updates:
       - "dependencies"
       - "dependabot"
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "chore(deps-actions)"
       include: "scope"
     groups:
       actions-minor-patch:
