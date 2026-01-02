@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/dependabot.yml'
+      - '.yamllint.yml'
 
 jobs:
   yamllint:
