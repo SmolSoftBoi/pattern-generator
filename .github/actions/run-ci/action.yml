@@ -83,6 +83,8 @@ runs:
           fi
 
           if [[ "$install_rc" -ne 0 ]]; then
+            # This message is formatted as a GitHub Actions annotation (notice); any use of %0A
+            # for line breaks or similar encoding is intentional for Actions' log rendering.
             echo "::notice title=Canary dependency install failed::The Node 'current' canary failed during dependency install (exit code: ${install_rc}). This is non-blocking and often indicates a native dependency (e.g., canvas) is not yet compatible with the newest Node/V8 ABI."
           else
             installed=true
