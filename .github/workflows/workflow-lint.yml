@@ -19,4 +19,4 @@ jobs:
       - name: Run actionlint
         uses: rhysd/actionlint@v1.7.10
         with:
-          fail-on-error: true
+          args: -color
