@@ -22,7 +22,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-02
 
 ## Commands
 
-yarn test && yarn lint
+- yarn lint
+- yarn test (optional, only if a `test` script is configured)
 
 ## Code Style
 
