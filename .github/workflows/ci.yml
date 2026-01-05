@@ -22,6 +22,9 @@ jobs:
         node: ['20.x', '22.x']
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Run CI (verify)
         uses: ./.github/actions/run-ci
         with:
@@ -33,6 +36,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Run CI (canary)
         uses: ./.github/actions/run-ci
         with:
