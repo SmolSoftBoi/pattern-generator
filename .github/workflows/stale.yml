@@ -11,12 +11,35 @@ on:
 
 jobs:
   stale:
-    runs-on: ubuntu-latest
+    # actions/stale@v10 runs on Node.js 24 and requires GitHub Actions runner v2.327.1+.
+    # Pin to a modern GitHub-hosted image (instead of ubuntu-latest) to avoid accidentally
+    # running on older runner images.
+    runs-on: ubuntu-22.04
     permissions:
       issues: write
       pull-requests: write
 
     steps:
+      - name: Verify GitHub Actions runner version (v2.327.1+)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required="2.327.1"
+          current="${RUNNER_VERSION:-}"
+
+          if [[ -z "$current" ]]; then
+            echo "::error title=Unknown runner version::RUNNER_VERSION env var is not set. actions/stale@v10 requires runner v${required}+ (Node.js 24). If you are using self-hosted runners, ensure they are updated to v${required}+ before enabling this workflow."
+            exit 1
+          fi
+
+          if [[ "$(printf '%s\n%s\n' "$required" "$current" | sort -V | head -n1)" != "$required" ]]; then
+            echo "::error title=Runner too old::GitHub Actions runner v${required}+ is required for actions/stale@v10 (Node.js 24). Current runner: v${current}."
+            exit 1
+          fi
+
+          echo "Runner version OK: v${current} (required v${required}+)"
+
       - uses: actions/stale@v10
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
