@@ -115,3 +115,9 @@ This document records planning decisions for implementing reliable GitHub Action
 - Dependency review will **keep PR commenting** enabled (comment summaries in the PR). This requires an explicit least-privilege exception: `pull-requests: write` for `dependency-review.yml`.
 
 **Rationale**: Matches repository security posture (Principle IX) and the user requirement for least privilege.
+
+## Follow-up: Workflow static validation (FR-016)
+
+**Chosen**: Add a small `workflow-lint.yml` workflow that runs `actionlint` on PRs and default-branch pushes.
+
+**Rationale**: Catches broken workflow syntax and common mistakes early with least-privilege permissions (`contents: read`). Keeps the main `ci.yml` focused on app validation.

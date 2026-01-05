@@ -7,7 +7,7 @@ This quickstart explains how to run the same checks locally that CI will run, an
 
 ## Local prerequisites
 
-- Node.js (CI will prefer `.nvmrc`, else `package.json` `engines.node`, else default to the repo’s expected Node major version)
+- Node.js (CI validates across a Node.js version matrix defined in `.github/workflows/ci.yml`: `20.x`, `22.x`, `24.x`, `current`)
 - Yarn (CI enables Corepack)
 
 ## Run the CI checks locally
@@ -43,7 +43,7 @@ Runs on:
 Per run, CI will:
 
 - Checkout the repo
-- Set up Node.js (version selection rules above)
+- Set up Node.js (per the CI-defined matrix: `20.x`, `22.x`, `24.x`, `current`)
 - Enable Corepack
 - Install dependencies (Yarn Classic vs Berry is detected)
 - Use caching to speed up installs
