@@ -290,6 +290,8 @@ jobs:
         id: install
         shell: bash
         run: |
+          # Intentionally omit '-e' so that we can capture the 'yarn install' exit code
+          # into install_rc and treat canary install failures as non-blocking.
           set -uo pipefail
 
           installed=false
