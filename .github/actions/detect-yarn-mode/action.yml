@@ -17,18 +17,20 @@ runs:
 
         berry=false
 
-        if [[ -f .yarnrc.yml || -d .yarn ]]; then
-          berry=true
-        fi
-
-        # package.json may declare a Yarn version via the `packageManager` field.
-        # When present, the optional helper script refines detection using that field.
+        # If the helper exists, it is authoritative.
         # It should exit with status 0 when Yarn Berry is detected, and non-zero otherwise.
         if [[ -f .github/scripts/is-yarn-berry.js ]]; then
           if node .github/scripts/is-yarn-berry.js; then
             berry=true
+          else
+            berry=false
           fi
         else
+          # Fall back to a heuristic when the helper isn't present.
+          if [[ -f .yarnrc.yml || -d .yarn ]]; then
+            berry=true
+          fi
+
           echo "::notice title=Using heuristic Yarn detection::.github/scripts/is-yarn-berry.js not found; using heuristic detection."
           echo "Heuristic detection is based on the presence of .yarnrc.yml or the .yarn directory."
           echo "For packageManager-based detection, add .github/scripts/is-yarn-berry.js that exits 0 when Yarn Berry is detected and non-zero otherwise."
