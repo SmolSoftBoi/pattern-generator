@@ -32,13 +32,19 @@ jobs:
           required="${REQUIRED_RUNNER_VERSION}"
           current="${RUNNER_VERSION:-}"
 
+          # Use GitHub Actions error annotation syntax (::error ...) so setup failures are clearly surfaced in the UI.
           if [[ -z "$current" ]]; then
-            echo "::error title=Unknown runner version::RUNNER_VERSION env var is not set. actions/stale@v10 requires runner v${required}+ (Node.js 24). If you are using self-hosted runners, ensure they are updated to v${required}+ before enabling this workflow."
+            msg="RUNNER_VERSION env var is not set. "
+            msg+="actions/stale@v10 requires runner v${required}+ (Node.js 24). "
+            msg+="If you are using self-hosted runners, ensure they are updated to v${required}+ before enabling this workflow."
+            echo "::error title=Unknown runner version::${msg}"
             exit 1
           fi
 
           if [[ "$(printf '%s\n%s\n' "$required" "$current" | sort -V | head -n1)" != "$required" ]]; then
-            echo "::error title=Runner too old::GitHub Actions runner v${required}+ is required for actions/stale@v10 (Node.js 24). Current runner: v${current}."
+            msg="GitHub Actions runner v${required}+ is required for actions/stale@v10 (Node.js 24). "
+            msg+="Current runner: v${current}."
+            echo "::error title=Runner too old::${msg}"
             exit 1
           fi
 
