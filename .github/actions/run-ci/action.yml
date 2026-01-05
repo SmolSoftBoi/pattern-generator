@@ -69,8 +69,9 @@ runs:
       shell: bash
       run: |
         if [[ "${{ inputs.canary }}" == "true" ]]; then
-          # Intentionally omit '-e' so that we can capture the 'yarn install' exit code
-          # into install_rc and treat canary install failures as non-blocking.
+          # GitHub's default bash invocation includes `-e -o pipefail`.
+          # Disable `-e` so we can treat canary install failures as non-blocking.
+          set +e
           set -uo pipefail
 
           installed=false
