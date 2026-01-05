@@ -31,7 +31,7 @@ TypeScript 5 (strict), Node.js (selected via `.nvmrc` → `engines.node` → def
 
 ## Recent Changes
 
-- 001-github-actions-ci: Added TypeScript 5 (strict), Node.js (selected via `.nvmrc` → `engines.node` → default) + Next.js 14, React 18, ESLint (`next lint`), Yarn
+- 001-github-actions-ci: Configured CI to run on a hardcoded Node.js version matrix defined in `.github/workflows/ci.yml`, plus TypeScript 5 (strict), Next.js 14, React 18, ESLint (`next lint`), Yarn
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
