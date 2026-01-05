@@ -16,20 +16,10 @@ jobs:
   verify:
     name: verify (node ${{ matrix.node }})
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - node: '20.x'
-            experimental: false
-          - node: '22.x'
-            experimental: false
-          # Note: actions/setup-node supports `current` as an alias for the latest Node.js release.
-          # This entry is treated as a canary (non-blocking) because some native dependencies
-          # (e.g., node-canvas via transitive deps) may lag behind the newest Node/V8 changes.
-          - node: 'current'
-            experimental: true
+        node: ['20.x', '22.x']
 
     steps:
       - name: Checkout
@@ -39,6 +29,168 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Verify CI helper scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          validate_ci_helper() {
+            local helper_path="$1"
+            local helper_label="$2" # e.g. "CI helper script" | "optional CI helper script"
+
+            # The script is invoked with `node`, so it does not need to be executable,
+            # but it SHOULD be syntactically valid and runnable.
+            if ! node --check "$helper_path"; then
+              echo "::error title=CI helper script syntax error::The ${helper_label} at ${helper_path} failed JavaScript syntax validation (node --check).%0AThis step validates syntax as a prerequisite; because syntax validation failed, the runtime self-test step will not be run."
+              exit 1
+            fi
+
+            # Deterministic runtime validation: ensure the script can load and parse package.json.
+            if ! node "$helper_path" --self-test >/dev/null; then
+              echo "::error title=Broken CI helper script::The ${helper_label} at ${helper_path} failed its runtime self-test.%0AThis usually means it threw an error while running, or it could not read/parse package.json."
+              exit 1
+            fi
+          }
+
+          if [[ ! -f .github/scripts/has-package-script.js ]]; then
+            echo "::error title=Missing CI helper script::Expected .github/scripts/has-package-script.js to exist in the repository.%0ACI uses this script to detect whether package.json scripts (for example, typecheck or test) are present.%0ACreate .github/scripts/has-package-script.js so that it accepts a package.json script name as its first argument.%0AFor example: 'node .github/scripts/has-package-script.js typecheck'.%0AThe script must exit with status 0 when the given script exists and with a non-zero status otherwise, then be committed to the repository."
+            exit 1
+          fi
+
+          validate_ci_helper ".github/scripts/has-package-script.js" "CI helper script"
+
+          # If present, also validate the optional Yarn Berry detector.
+          if [[ -f .github/scripts/is-yarn-berry.js ]]; then
+            validate_ci_helper ".github/scripts/is-yarn-berry.js" "optional CI helper script"
+          fi
+
+      - name: Detect Yarn mode (Berry vs Classic)
+        id: yarn
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          berry=false
+
+          if [[ -f .yarnrc.yml || -d .yarn ]]; then
+            berry=true
+          fi
+
+          # package.json may declare a Yarn version via the `packageManager` field.
+          # When present, the optional helper script refines detection using that field.
+          # It should exit with status 0 when Yarn Berry is detected, and non-zero otherwise.
+          if [[ -f .github/scripts/is-yarn-berry.js ]]; then
+            if node .github/scripts/is-yarn-berry.js; then
+              berry=true
+            fi
+          else
+            echo "::notice title=Using heuristic Yarn detection::.github/scripts/is-yarn-berry.js not found; using heuristic detection."
+            echo "Heuristic detection is based on the presence of .yarnrc.yml or the .yarn directory."
+            echo "For packageManager-based detection, add .github/scripts/is-yarn-berry.js that exits 0 when Yarn Berry is detected and non-zero otherwise."
+          fi
+
+          echo "berry=$berry" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Yarn Berry offline cache (.yarn/cache)
+        if: steps.yarn.outputs.berry == 'true'
+        uses: actions/cache@v4
+        with:
+          path: .yarn/cache
+          key: yarn-berry-${{ runner.os }}-${{ hashFiles('yarn.lock') }}-${{ hashFiles('.yarnrc.yml') || 'no-yarnrc' }}
+          restore-keys: |
+            yarn-berry-${{ runner.os }}-
+
+      - name: Install system dependencies for node-canvas (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # `canvas` is pulled in transitively (e.g., via trianglify/react-trianglify). Prebuilt
+          # binaries are not always available for all Node versions, so it may fall back to a
+          # source build during `yarn install`. Install the native dependencies up-front.
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            pkg-config \
+            libcairo2-dev \
+            libpango1.0-dev \
+            libjpeg-dev \
+            libgif-dev \
+            librsvg2-dev \
+            libpixman-1-dev \
+            libpng-dev
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.yarn.outputs.berry }}" == "true" ]]; then
+            yarn install --immutable
+          else
+            yarn install
+          fi
+
+      - name: Lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node .github/scripts/has-package-script.js lint; then
+            yarn lint
+          else
+            echo "No lint script configured in package.json. Skipping lint phase (this is not an error)."
+          fi
+
+      - name: Typecheck
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node .github/scripts/has-package-script.js typecheck; then
+            yarn typecheck
+          elif command -v tsc &>/dev/null || [[ -f node_modules/.bin/tsc ]]; then
+            yarn tsc --noEmit
+          else
+            echo "No typecheck script configured and TypeScript not found. Skipping typecheck phase (this is not an error)."
+          fi
+
+      - name: Tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node .github/scripts/has-package-script.js test; then
+            yarn test
+          else
+            echo "No test script configured in package.json. Skipping test phase (this is not an error)."
+          fi
+
+      - name: Build
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node .github/scripts/has-package-script.js build; then
+            yarn build
+          else
+            echo "No build script configured in package.json. Skipping build phase (this is not an error)."
+          fi
+
+  canary:
+    name: canary (node current)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js current
+        uses: actions/setup-node@v4
+        with:
+          node-version: current
           cache: yarn
 
       - name: Enable Corepack
