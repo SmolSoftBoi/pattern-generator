@@ -1,0 +1,155 @@
+name: Run CI steps
+
+description: |
+  Run the repository CI phases (install, lint, typecheck, tests, build) with Yarn/Corepack,
+  optional Yarn Berry detection/caching, and optional canary (non-blocking) behavior.
+
+inputs:
+  node-version:
+    description: Node.js version to install (e.g. 20.x, 22.x, current)
+    required: true
+  canary:
+    description: When true, dependency install failure becomes a notice and subsequent phases are skipped; lint/typecheck/test/build are continue-on-error.
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: yarn
+
+    - name: Enable Corepack
+      shell: bash
+      run: corepack enable
+
+    - name: Verify CI helper scripts
+      shell: bash
+      run: bash .github/scripts/verify-ci-helpers.sh
+
+    - name: Detect Yarn mode (Berry vs Classic)
+      id: yarn
+      uses: ./.github/actions/detect-yarn-mode
+
+    - name: Cache Yarn Berry offline cache (.yarn/cache)
+      if: steps.yarn.outputs.berry == 'true'
+      uses: actions/cache@v4
+      with:
+        path: .yarn/cache
+        key: yarn-berry-${{ runner.os }}-${{ hashFiles('yarn.lock') }}-${{ hashFiles('.yarnrc.yml') || 'no-yarnrc' }}
+        restore-keys: |
+          yarn-berry-${{ runner.os }}-
+
+    - name: Install system dependencies for node-canvas (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        # `canvas` is pulled in transitively (e.g., via trianglify/react-trianglify). Prebuilt
+        # binaries are not always available for all Node versions, so it may fall back to a
+        # source build during `yarn install`. Install the native dependencies up-front.
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          build-essential \
+          pkg-config \
+          libcairo2-dev \
+          libpango1.0-dev \
+          libjpeg-dev \
+          libgif-dev \
+          librsvg2-dev \
+          libpixman-1-dev \
+          libpng-dev
+
+    - name: Install dependencies
+      id: install
+      shell: bash
+      run: |
+        if [[ "${{ inputs.canary }}" == "true" ]]; then
+          # Intentionally omit '-e' so that we can capture the 'yarn install' exit code
+          # into install_rc and treat canary install failures as non-blocking.
+          set -uo pipefail
+
+          installed=false
+          install_rc=0
+
+          if [[ "${{ steps.yarn.outputs.berry }}" == "true" ]]; then
+            yarn install --immutable || install_rc=$?
+          else
+            yarn install || install_rc=$?
+          fi
+
+          if [[ "$install_rc" -ne 0 ]]; then
+            echo "::notice title=Canary dependency install failed::The Node 'current' canary failed during dependency install (exit code: ${install_rc}). This is non-blocking and often indicates a native dependency (e.g., canvas) is not yet compatible with the newest Node/V8 ABI."
+          else
+            installed=true
+          fi
+
+          echo "installed=$installed" >> "$GITHUB_OUTPUT"
+        else
+          set -euo pipefail
+
+          if [[ "${{ steps.yarn.outputs.berry }}" == "true" ]]; then
+            yarn install --immutable
+          else
+            yarn install
+          fi
+
+          echo "installed=true" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Lint
+      if: steps.install.outputs.installed == 'true'
+      continue-on-error: ${{ inputs.canary == 'true' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        if node .github/scripts/has-package-script.js lint; then
+          yarn lint
+        else
+          echo "No lint script configured in package.json. Skipping lint phase (this is not an error)."
+        fi
+
+    - name: Typecheck
+      if: steps.install.outputs.installed == 'true'
+      continue-on-error: ${{ inputs.canary == 'true' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        if node .github/scripts/has-package-script.js typecheck; then
+          yarn typecheck
+        elif yarn --silent tsc --version >/dev/null 2>&1; then
+          yarn tsc --noEmit
+        else
+          echo "No typecheck script configured and TypeScript not found. Skipping typecheck phase (this is not an error)."
+        fi
+
+    - name: Tests
+      if: steps.install.outputs.installed == 'true'
+      continue-on-error: ${{ inputs.canary == 'true' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        if node .github/scripts/has-package-script.js test; then
+          yarn test
+        else
+          echo "No test script configured in package.json. Skipping test phase (this is not an error)."
+        fi
+
+    - name: Build
+      if: steps.install.outputs.installed == 'true'
+      continue-on-error: ${{ inputs.canary == 'true' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        if node .github/scripts/has-package-script.js build; then
+          yarn build
+        else
+          echo "No build script configured in package.json. Skipping build phase (this is not an error)."
+        fi
