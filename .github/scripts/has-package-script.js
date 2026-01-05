@@ -23,7 +23,8 @@ function main() {
   let pkg;
   try {
     pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-  } catch {
+  } catch (err) {
+    console.error(`Error reading or parsing package.json at "${pkgPath}":`, err && err.message ? err.message : err);
     process.exit(1);
   }
 
