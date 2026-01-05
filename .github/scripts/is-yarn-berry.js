@@ -14,7 +14,8 @@ function main() {
   let pkg;
   try {
     pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-  } catch {
+  } catch (err) {
+    console.error(`Failed to read or parse package.json at "${pkgPath}":`, err instanceof Error ? err.message : err);
     process.exit(1);
   }
 
