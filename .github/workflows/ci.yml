@@ -19,6 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Note: actions/setup-node supports `current` as an alias for the latest Node.js release.
         node: ['20.x', '22.x', '24.x', 'current']
 
     steps:
@@ -105,7 +106,7 @@ jobs:
       - name: Cache Yarn Berry offline cache (.yarn/cache)
         if: steps.yarn.outputs.berry == 'true'
         uses: actions/cache@v4
-          key: yarn-berry-${{ runner.os }}-${{ hashFiles('yarn.lock') }}-${{ hashFiles('.yarnrc.yml') || '' }}
+        with:
           path: .yarn/cache
           key: yarn-berry-${{ runner.os }}-${{ hashFiles('yarn.lock') }}-${{ hashFiles('.yarnrc.yml') || 'no-yarnrc' }}
           restore-keys: |
@@ -122,7 +123,14 @@ jobs:
           fi
 
       - name: Lint
-        run: yarn lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node .github/scripts/has-package-script.js lint; then
+            yarn lint
+          else
+            echo "No lint script configured in package.json. Skipping lint phase (this is not an error)."
+          fi
 
       - name: Typecheck
         shell: bash
@@ -145,7 +153,14 @@ jobs:
           fi
 
       - name: Build
-        run: yarn build
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node .github/scripts/has-package-script.js build; then
+            yarn build
+          else
+            echo "No build script configured in package.json. Skipping build phase (this is not an error)."
+          fi
 
   status-check:
     name: status-check
