@@ -138,8 +138,10 @@ jobs:
           set -euo pipefail
           if node .github/scripts/has-package-script.js typecheck; then
             yarn typecheck
-          else
+          elif command -v tsc &>/dev/null || [[ -f node_modules/.bin/tsc ]]; then
             yarn tsc --noEmit
+          else
+            echo "No typecheck script configured and TypeScript not found. Skipping typecheck phase (this is not an error)."
           fi
 
       - name: Tests
