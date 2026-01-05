@@ -38,16 +38,17 @@ This document records planning decisions for implementing reliable GitHub Action
 
 **Chosen**: Validate the project against a Node.js version matrix defined in CI (single authoritative source).
 
-**Initial matrix**: `20.x`, `22.x`, `24.x`, `current`.
+**Initial matrix**: `20.x`, `22.x`, `current`.
 
 **Rationale**: Cover the practical support envelope across Node release lines:
 
-- **20.x**: older Maintenance LTS line, kept temporarily in the matrix primarily for backward-compatibility coverage while it remains within its upstream support period (see the official Node.js release schedule at https://nodejs.org/en/about/previous-releases; Node.js 20.x is currently scheduled to reach EOL on 2026-04-30); per FR-012c, remove this line from the matrix within 30 days after that EOL date, updating this document if the upstream schedule changes
+- **20.x**: older Maintenance LTS line, kept temporarily in the matrix primarily for backward-compatibility coverage while it remains within its upstream support period (see the official [Node.js release schedule](https://nodejs.org/en/about/previous-releases); Node.js 20.x is currently scheduled to reach EOL on 2026-04-30); per FR-012c, remove this line from the matrix within 30 days after that EOL date, updating this document if the upstream schedule changes
 - **22.x**: current primary maintenance LTS line (expected default for most users)
-- **24.x**: active LTS line (newer long-term baseline as it matures)
 - **current**: latest/current dist release line (early signal for upcoming changes)
 
-**Note**: `current` resolves to the latest Node dist version. It may not always be cached and can be more likely to download from dist than pinned majors.
+**Note**: `current` resolves to the latest Node dist version.
+
+**Implementation note**: the `current` entry is treated as a non-blocking canary in `ci.yml`. Some native modules (e.g., `canvas` pulled transitively via trianglify/react-trianglify) may lag behind new Node/V8 ABIs and fail to install/build even when system dependencies are present. Keeping `current` as canary preserves early warning without breaking required CI gates.
 
 **Notes**:
 

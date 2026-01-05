@@ -7,7 +7,7 @@ This quickstart explains how to run the same checks locally that CI will run, an
 
 ## Local prerequisites
 
-- Node.js (CI validates across a Node.js version matrix defined in `.github/workflows/ci.yml`: `20.x`, `22.x`, `24.x`, `current`)
+- Node.js (CI validates across a Node.js version matrix defined in `.github/workflows/ci.yml`: `20.x`, `22.x`, and `current` as a canary)
 - Yarn (CI enables Corepack)
 
 ## Run the CI checks locally
@@ -43,13 +43,17 @@ Runs on:
 Per run, CI will:
 
 - Checkout the repo
-- Set up Node.js (per the CI-defined matrix: `20.x`, `22.x`, `24.x`, `current`)
+- Set up Node.js (per the CI-defined matrix: `20.x`, `22.x`, plus `current` as a canary)
 - Enable Corepack
 - Install dependencies (Yarn Classic vs Berry is detected)
 - Use caching to speed up installs
 - Run lint, typecheck, tests (if present), and build
 
 Concurrency cancels superseded runs for the same workflow + ref.
+
+### Note about `current`
+
+The `current` Node.js entry is treated as a non-blocking canary. This is intentional: some transitive dependencies include native modules (for example, `canvas`), and prebuilt binaries or source-compatibility may lag behind new Node/V8 releases. The canary still runs to provide early warning, but it does not block merges.
 
 ### `codeql.yml`
 

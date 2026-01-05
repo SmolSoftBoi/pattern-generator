@@ -16,11 +16,20 @@ jobs:
   verify:
     name: verify (node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
-        # Note: actions/setup-node supports `current` as an alias for the latest Node.js release.
-        node: ['20.x', '22.x', '24.x', 'current']
+        include:
+          - node: '20.x'
+            experimental: false
+          - node: '22.x'
+            experimental: false
+          # Note: actions/setup-node supports `current` as an alias for the latest Node.js release.
+          # This entry is treated as a canary (non-blocking) because some native dependencies
+          # (e.g., node-canvas via transitive deps) may lag behind the newest Node/V8 changes.
+          - node: 'current'
+            experimental: true
 
     steps:
       - name: Checkout

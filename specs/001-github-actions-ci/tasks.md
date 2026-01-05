@@ -31,7 +31,10 @@ description: "Task list for feature implementation"
   - Note:
     - The proposed matrix is chosen to cover a range of supported Node.js LTS releases plus the current release.
     - Per FR-012c, each Node.js version in the matrix (e.g., `20.x`, `22.x`, `24.x`) must be removed from the matrix within 30 days of its EOL date.
-    - The authoritative EOL source is the official Node.js release schedule at https://github.com/nodejs/release#release-schedule. `specs/001-github-actions-ci/research.md` may summarize this information but must treat the official schedule as the source of truth. Update the matrix whenever EOL dates are announced or changed in the official schedule.
+    - The authoritative EOL source is the official [Node.js release schedule](https://github.com/nodejs/release#release-schedule). `specs/001-github-actions-ci/research.md` may summarize this information but must treat the official schedule as the source of truth. Update the matrix whenever EOL dates are announced or changed in the official schedule.
+  - Update:
+    - The implemented matrix keeps `20.x` and `22.x` as required merge gates, and runs `current` as a non-blocking canary.
+    - Rationale: some transitive dependencies include native modules (e.g., `canvas`) that may not be compatible with the newest Node/V8 ABI immediately.
 - [x] T003 Enable Corepack in `.github/workflows/ci.yml` before any Yarn commands
 - [x] T004 Implement Yarn mode detection in `.github/workflows/ci.yml` (Berry vs Classic) and set install args accordingly (`--immutable` for Berry)
 - [x] T005 Align `specs/001-github-actions-ci/spec.md` with plan decisions (Node matrix, concurrency key semantics, and security workflow requirements)
