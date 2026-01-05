@@ -77,9 +77,11 @@ runs:
           install_rc=0
 
           if [[ "${{ steps.yarn.outputs.berry }}" == "true" ]]; then
-            yarn install --immutable || install_rc=$?
+            yarn install --immutable
+            install_rc=$?
           else
-            yarn install || install_rc=$?
+            yarn install
+            install_rc=$?
           fi
 
           if [[ "$install_rc" -ne 0 ]]; then
