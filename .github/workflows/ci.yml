@@ -34,6 +34,47 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
+      - name: Verify CI helper scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          validate_ci_helper() {
+            local helper_path="$1"
+            local helper_label="$2" # e.g. "CI helper script" | "optional CI helper script"
+
+            # The script is invoked with `node`, so it does not need to be executable,
+            # but it SHOULD be syntactically valid and runnable.
+            if ! node --check "$helper_path"; then
+              echo '::error title=CI helper script syntax error::The '"$helper_label"' at '"$helper_path"' failed JavaScript syntax validation (node --check).'
+              echo "This step validates syntax as a prerequisite; because syntax validation failed, the runtime self-test step will not be run."
+              exit 1
+            fi
+
+            # Deterministic runtime validation: ensure the script can load and parse package.json.
+            if ! node "$helper_path" --self-test >/dev/null; then
+              echo "::error title=Broken CI helper script::The $helper_label at $helper_path failed its runtime self-test."
+              echo "This usually means it threw an error while running, or it could not read/parse package.json."
+              exit 1
+            fi
+          }
+
+          if [[ ! -f .github/scripts/has-package-script.js ]]; then
+            echo "::error title=Missing CI helper script::Expected .github/scripts/has-package-script.js to exist in the repository."
+            echo "CI uses this script to detect whether package.json scripts (for example, typecheck or test) are present."
+            echo "Create .github/scripts/has-package-script.js so that it accepts a package.json script name as its first argument."
+            echo "For example: 'node .github/scripts/has-package-script.js typecheck'."
+            echo "The script must exit with status 0 when the given script exists and with a non-zero status otherwise, then be committed to the repository."
+            exit 1
+          fi
+
+          validate_ci_helper ".github/scripts/has-package-script.js" "CI helper script"
+
+          # If present, also validate the optional Yarn Berry detector.
+          if [[ -f .github/scripts/is-yarn-berry.js ]]; then
+            validate_ci_helper ".github/scripts/is-yarn-berry.js" "optional CI helper script"
+          fi
+
       - name: Detect Yarn mode (Berry vs Classic)
         id: yarn
         shell: bash
@@ -46,9 +87,17 @@ jobs:
             berry=true
           fi
 
-          # package.json may declare a Yarn version via the `packageManager` field
-          if node -e "const p=require('./package.json'); process.exit(p.packageManager && p.packageManager.startsWith('yarn@') ? 0 : 1)"; then
-            berry=true
+          # package.json may declare a Yarn version via the `packageManager` field.
+          # When present, the optional helper script refines detection using that field.
+          # It should exit with status 0 when Yarn Berry is detected, and non-zero otherwise.
+          if [[ -f .github/scripts/is-yarn-berry.js ]]; then
+            if node .github/scripts/is-yarn-berry.js; then
+              berry=true
+            fi
+          else
+            echo "::notice title=Using heuristic Yarn detection::.github/scripts/is-yarn-berry.js not found; using heuristic detection."
+            echo "Heuristic detection is based on the presence of .yarnrc.yml or the .yarn directory."
+            echo "For packageManager-based detection, add .github/scripts/is-yarn-berry.js that exits 0 when Yarn Berry is detected and non-zero otherwise."
           fi
 
           echo "berry=$berry" >> "$GITHUB_OUTPUT"
@@ -56,9 +105,9 @@ jobs:
       - name: Cache Yarn Berry offline cache (.yarn/cache)
         if: steps.yarn.outputs.berry == 'true'
         uses: actions/cache@v4
-        with:
+          key: yarn-berry-${{ runner.os }}-${{ hashFiles('yarn.lock') }}-${{ hashFiles('.yarnrc.yml') || '' }}
           path: .yarn/cache
-          key: yarn-berry-${{ runner.os }}-${{ hashFiles('yarn.lock', '.yarnrc.yml') }}
+          key: yarn-berry-${{ runner.os }}-${{ hashFiles('yarn.lock') }}-${{ hashFiles('.yarnrc.yml') || 'no-yarnrc' }}
           restore-keys: |
             yarn-berry-${{ runner.os }}-
 
@@ -79,7 +128,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.typecheck ? 0 : 1)"; then
+          if node .github/scripts/has-package-script.js typecheck; then
             yarn typecheck
           else
             yarn tsc --noEmit
@@ -89,17 +138,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then
+          if node .github/scripts/has-package-script.js test; then
             yarn test
           else
-            echo "no tests found/configured"
+            echo "No test script configured in package.json. Skipping test phase (this is not an error)."
           fi
 
       - name: Build
         run: yarn build
 
-  ci:
-    name: ci
+  status-check:
+    name: status-check
     runs-on: ubuntu-latest
     needs: [verify]
     if: ${{ always() }}
@@ -110,4 +159,4 @@ jobs:
         run: |
           set -euo pipefail
           echo "verify result: ${{ needs.verify.result }}"
-          test "${{ needs.verify.result }}" = "success"
+          test "${{ needs.verify.result }}" = "success" || { echo "verify job did not succeed: ${{ needs.verify.result }}"; exit 1; }

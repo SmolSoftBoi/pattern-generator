@@ -27,7 +27,11 @@ description: "Task list for feature implementation"
 **Purpose**: Establish a minimal CI workflow skeleton and shared decision logic (Node/Yarn detection) without yet requiring full validation.
 
 - [x] T001 Create `.github/workflows/ci.yml` with workflow name, triggers (PR + default-branch push), `permissions: contents: read`, and a single `ci` job scaffold
-- [x] T002 Implement a Node.js version matrix in `.github/workflows/ci.yml` (single authoritative source) and run CI across it (initial proposal: `20.x`, `22.x`, `24.x`, `current` — chosen to cover maintenance LTS, maintenance LTS, active LTS, and current)
+- [x] T002 Implement a Node.js version matrix in `.github/workflows/ci.yml` (single authoritative source) and run CI across it (initial proposal: `20.x`, `22.x`, `24.x`, `current`).
+  - Note:
+    - The proposed matrix is chosen to cover a range of supported Node.js LTS releases plus the current release.
+    - Per FR-012c, each Node.js version in the matrix (e.g., `20.x`, `22.x`, `24.x`) must be removed from the matrix within 30 days of its EOL date.
+    - The authoritative EOL source is the official Node.js release schedule at https://github.com/nodejs/release#release-schedule. `specs/001-github-actions-ci/research.md` may summarize this information but must treat the official schedule as the source of truth. Update the matrix whenever EOL dates are announced or changed in the official schedule.
 - [x] T003 Enable Corepack in `.github/workflows/ci.yml` before any Yarn commands
 - [x] T004 Implement Yarn mode detection in `.github/workflows/ci.yml` (Berry vs Classic) and set install args accordingly (`--immutable` for Berry)
 - [x] T005 Align `specs/001-github-actions-ci/spec.md` with plan decisions (Node matrix, concurrency key semantics, and security workflow requirements)

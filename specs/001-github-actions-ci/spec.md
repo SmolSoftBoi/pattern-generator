@@ -13,7 +13,7 @@
 - Q: For push events, which branches should trigger CI? → A: Run CI on pushes to the default branch.
 - Q: Which package manager should CI use for installs? → A: Yarn.
 - Q: What Node.js version strategy should CI use? → A: Validate against a Node.js version matrix defined in CI (single authoritative source).
-- Q: How should concurrency/deduping work across push and pull_request triggers? → A: Use concurrency group `${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}` with `cancel-in-progress: true`.
+- Q: How should concurrency and deduplication work across push and pull_request triggers? → A: Use concurrency group `${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}` with `cancel-in-progress: true`.
   - Expected cancellation: newer PR commits cancel older PR runs for that PR ref; newer default-branch pushes cancel older push runs for that branch ref.
   - Not expected: PR runs do not cancel push runs (and vice versa), enforced by including `${{ github.event_name }}`.
 
@@ -99,7 +99,14 @@ As a contributor, I want CI runs to finish quickly and avoid redundant work, so 
 - **FR-009**: CI MUST follow least-privilege access (read-only permissions unless a clear need is documented).
 - **FR-010**: CI MUST produce a single, consistent overall status that can be used as a merge gate in branch protection rules.
 - **FR-011**: If no tests are configured/found, the CI “tests” phase MUST still run and MUST pass while clearly logging that no tests were executed.
-- **FR-012**: CI MUST validate the project across a Node.js version matrix defined in CI (single authoritative source), including at least two supported LTS lines and one “current/latest” line (e.g., `current` for `actions/setup-node`).
+- **FR-012a**: CI MUST validate the project across a Node.js version matrix that is defined in CI and used as the single authoritative source of Node.js versions for all CI jobs.
+- **FR-012b**: The Node.js version matrix MUST meet all of the following criteria:
+  - It MUST include at least two supported LTS lines plus the current stable release line at any given time. This is the minimum steady-state requirement, not a cap.
+  - It MAY temporarily include additional supported LTS lines during overlap periods (for example, when a new LTS line is introduced and the previous LTS line has not yet reached EOL).
+  - Once an older LTS line reaches EOL and is removed, the matrix is not required to maintain more than this minimum. Specifically, you MUST NOT add non-LTS or otherwise unsupported majors solely to keep the number of lines above the minimum.
+  - For this specification, a `supported LTS line` is a Node.js major version that is in either Active LTS or Maintenance LTS according to the official Node.js release schedule.
+- **FR-012c**: The team MUST monitor the official Node.js release schedule, and any Node.js version that reaches End-of-Life (EOL) according to that schedule MUST be removed from the CI version matrix within 30 days of its published EOL date.
+- **FR-012d**: After removing any EOL versions from the CI version matrix, the resulting matrix MUST still satisfy FR-012a–FR-012c. In particular, if the matrix previously contained more than two supported LTS lines during an overlap period, it is acceptable for it to drop back to the minimum described in FR-012b, and additional non-LTS or otherwise unsupported majors MUST NOT be added solely to backfill removed EOL lines.
 - **FR-013**: Push-triggered CI runs MUST NOT cancel pull request-triggered CI runs (and vice versa). The concurrency key MUST include `${{ github.event_name }}` to enforce this.
 - **FR-014**: CodeQL scanning MUST run for pull requests and pushes to the default branch, and on a weekly schedule; it MUST analyze `javascript-typescript` and follow least-privilege permissions.
 - **FR-015**: Dependency Review MUST run for pull requests and MUST fail on newly introduced vulnerable dependency changes (at or above a configured severity threshold) and newly introduced dependencies with denied licenses. It MUST follow least-privilege permissions; PR comment summaries are allowed as an intentional exception and may require `pull-requests: write` (which MUST be documented).

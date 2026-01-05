@@ -42,9 +42,9 @@ This document records planning decisions for implementing reliable GitHub Action
 
 **Rationale**: Cover the practical support envelope across Node release lines:
 
-- **20.x**: maintenance LTS line (still widely deployed)
-- **22.x**: maintenance LTS line (still widely deployed)
-- **24.x**: active LTS line
+- **20.x**: older Maintenance LTS line, kept temporarily in the matrix primarily for backward-compatibility coverage while it remains within its upstream support period (see the official Node.js release schedule at https://nodejs.org/en/about/previous-releases; Node.js 20.x is currently scheduled to reach EOL on 2026-04-30); per FR-012c, remove this line from the matrix within 30 days after that EOL date, updating this document if the upstream schedule changes
+- **22.x**: current primary maintenance LTS line (expected default for most users)
+- **24.x**: active LTS line (newer long-term baseline as it matures)
 - **current**: latest/current dist release line (early signal for upcoming changes)
 
 **Note**: `current` resolves to the latest Node dist version. It may not always be cached and can be more likely to download from dist than pinned majors.
