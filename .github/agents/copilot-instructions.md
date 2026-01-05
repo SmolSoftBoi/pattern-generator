@@ -22,7 +22,7 @@ Auto-generated from all feature plans. Last updated: 2026-01-02
 
 ## Commands
 
-npm test && npm run lint
+yarn test && yarn lint
 
 ## Code Style
 
