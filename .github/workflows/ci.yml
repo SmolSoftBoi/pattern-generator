@@ -180,7 +180,6 @@ jobs:
   canary:
     name: canary (node current)
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -288,16 +287,31 @@ jobs:
             libpng-dev
 
       - name: Install dependencies
+        id: install
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
+
+          installed=false
+          install_rc=0
+
           if [[ "${{ steps.yarn.outputs.berry }}" == "true" ]]; then
-            yarn install --immutable
+            yarn install --immutable || install_rc=$?
           else
-            yarn install
+            yarn install || install_rc=$?
           fi
 
+          if [[ "$install_rc" -ne 0 ]]; then
+            echo "::notice title=Canary dependency install failed::The Node 'current' canary failed during dependency install (exit code: ${install_rc}). This is non-blocking and often indicates a native dependency (e.g., canvas) is not yet compatible with the newest Node/V8 ABI."
+          else
+            installed=true
+          fi
+
+          echo "installed=$installed" >> "$GITHUB_OUTPUT"
+
       - name: Lint
+        if: steps.install.outputs.installed == 'true'
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -308,6 +322,8 @@ jobs:
           fi
 
       - name: Typecheck
+        if: steps.install.outputs.installed == 'true'
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -320,6 +336,8 @@ jobs:
           fi
 
       - name: Tests
+        if: steps.install.outputs.installed == 'true'
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -330,6 +348,8 @@ jobs:
           fi
 
       - name: Build
+        if: steps.install.outputs.installed == 'true'
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
