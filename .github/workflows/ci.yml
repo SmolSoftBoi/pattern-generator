@@ -47,25 +47,19 @@ jobs:
             # The script is invoked with `node`, so it does not need to be executable,
             # but it SHOULD be syntactically valid and runnable.
             if ! node --check "$helper_path"; then
-              echo '::error title=CI helper script syntax error::The '"$helper_label"' at '"$helper_path"' failed JavaScript syntax validation (node --check).'
-              echo "This step validates syntax as a prerequisite; because syntax validation failed, the runtime self-test step will not be run."
+              echo "::error title=CI helper script syntax error::The ${helper_label} at ${helper_path} failed JavaScript syntax validation (node --check).%0AThis step validates syntax as a prerequisite; because syntax validation failed, the runtime self-test step will not be run."
               exit 1
             fi
 
             # Deterministic runtime validation: ensure the script can load and parse package.json.
             if ! node "$helper_path" --self-test >/dev/null; then
-              echo "::error title=Broken CI helper script::The $helper_label at $helper_path failed its runtime self-test."
-              echo "This usually means it threw an error while running, or it could not read/parse package.json."
+              echo "::error title=Broken CI helper script::The ${helper_label} at ${helper_path} failed its runtime self-test.%0AThis usually means it threw an error while running, or it could not read/parse package.json."
               exit 1
             fi
           }
 
           if [[ ! -f .github/scripts/has-package-script.js ]]; then
-            echo "::error title=Missing CI helper script::Expected .github/scripts/has-package-script.js to exist in the repository."
-            echo "CI uses this script to detect whether package.json scripts (for example, typecheck or test) are present."
-            echo "Create .github/scripts/has-package-script.js so that it accepts a package.json script name as its first argument."
-            echo "For example: 'node .github/scripts/has-package-script.js typecheck'."
-            echo "The script must exit with status 0 when the given script exists and with a non-zero status otherwise, then be committed to the repository."
+            echo "::error title=Missing CI helper script::Expected .github/scripts/has-package-script.js to exist in the repository.%0ACI uses this script to detect whether package.json scripts (for example, typecheck or test) are present.%0ACreate .github/scripts/has-package-script.js so that it accepts a package.json script name as its first argument.%0AFor example: 'node .github/scripts/has-package-script.js typecheck'.%0AThe script must exit with status 0 when the given script exists and with a non-zero status otherwise, then be committed to the repository."
             exit 1
           fi
 
