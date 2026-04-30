@@ -1,10 +1,12 @@
 import chroma, { Color } from 'chroma-js';
-import trianglify, {
+import trianglify from 'trianglify/dist/trianglify.bundle';
+import toPx from 'unit-to-px';
+
+import type {
   Pattern as TrianglifyPattern,
   Options,
   SVGOptions,
 } from 'trianglify';
-import toPx from 'unit-to-px';
 
 // import { getPoints } from './points';
 

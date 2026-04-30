@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Form,
   Button,
@@ -10,8 +10,6 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from 'react-bootstrap';
-import Trianglify from 'react-trianglify';
-import { Pattern as TrianglifyPattern } from 'trianglify';
 
 import Pattern, {
   PatternColor,
@@ -25,6 +23,8 @@ import Pattern, {
 } from '../pattern';
 
 import PatternColorDropdownComponent from './PatternColorDropdown';
+
+import type { Pattern as TrianglifyPattern } from 'trianglify';
 
 export default function PatternComponent() {
   const [pattern, setPattern] = useState<Pattern>(new Pattern());
@@ -474,23 +474,40 @@ export default function PatternComponent() {
         </Col>
 
         <Col className="preview preview-inset flex-column overflow-scroll">
-          <div className="object-fit-contain mh-100 mw-100">
-            <Trianglify
-              width={trianglifyPattern.opts.width}
-              height={trianglifyPattern.opts.height}
-              cellSize={trianglifyPattern.opts.cellSize}
-              variance={trianglifyPattern.opts.variance}
-              seed={trianglifyPattern.opts.seed}
-              xColors={trianglifyPattern.opts.xColors}
-              yColors={trianglifyPattern.opts.yColors}
-              colorSpace={trianglifyPattern.opts.colorSpace}
-              colorFunction={trianglifyPattern.opts.colorFunction}
-              strokeWidth={trianglifyPattern.opts.strokeWidth}
-              points={trianglifyPattern.opts.points}
-            />
-          </div>
+          <TrianglifyPreview trianglifyPattern={trianglifyPattern} />
         </Col>
       </Row>
     </Container>
+  );
+}
+
+function TrianglifyPreview({
+  trianglifyPattern,
+}: {
+  trianglifyPattern: TrianglifyPattern;
+}) {
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const previewElement = previewRef.current;
+
+    if (!previewElement) {
+      return;
+    }
+
+    const svgElement = trianglifyPattern.toSVG({ includeNamespace: true });
+    previewElement.replaceChildren(svgElement);
+
+    return () => {
+      svgElement.remove();
+    };
+  }, [trianglifyPattern]);
+
+  return (
+    <div
+      ref={previewRef}
+      className="object-fit-contain mh-100 mw-100"
+      aria-hidden="true"
+    />
   );
 }
