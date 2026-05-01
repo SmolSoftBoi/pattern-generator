@@ -388,7 +388,7 @@ export default function PatternComponent() {
                   <ToggleButton
                     id="yGradientType-match-x"
                     variant="secondary"
-                    value="match-x"
+                    value="match"
                   >
                     <span className="icon icon-link">🔗</span> Match X
                   </ToggleButton>
