@@ -26,6 +26,15 @@ import PatternColorDropdownComponent from './PatternColorDropdown';
 
 import type { Pattern as TrianglifyPattern } from 'trianglify';
 
+/**
+ * Render the Pattern editor UI and live Trianglify preview.
+ *
+ * Manages user-editable pattern state (size, palettes, gradients and foreground),
+ * keeps the trianglify output in sync with controls, and provides actions to
+ * regenerate the pattern and download it as PNG or SVG.
+ *
+ * @returns The React element containing configuration controls and the preview.
+ */
 export default function PatternComponent() {
   const [pattern, setPattern] = useState<Pattern>(new Pattern());
   const [patternSize, setPatternSize] = useState<PatternSize>(
@@ -481,6 +490,15 @@ export default function PatternComponent() {
   );
 }
 
+/**
+ * Render a live SVG preview for a trianglify pattern inside a container element.
+ *
+ * Inserts the pattern's SVG into an internal div, updates the SVG whenever
+ * `trianglifyPattern` changes, and removes the injected SVG on cleanup.
+ *
+ * @param trianglifyPattern - Trianglify pattern used to generate the SVG to display
+ * @returns A div element that hosts the generated SVG preview
+ */
 function TrianglifyPreview({
   trianglifyPattern,
 }: {
