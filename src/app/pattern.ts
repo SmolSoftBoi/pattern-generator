@@ -541,6 +541,6 @@ export default class Pattern {
   }
 
   svg(options?: SVGOptions) {
-    return this._pattern!.toSVG(options);
+    return this._pattern!.toSVG(undefined, options);
   }
 }

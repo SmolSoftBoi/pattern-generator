@@ -26,6 +26,8 @@ import PatternColorDropdownComponent from './PatternColorDropdown';
 
 import type { Pattern as TrianglifyPattern } from 'trianglify';
 
+const trianglifySvgOptions = { includeNamespace: true };
+
 export default function PatternComponent() {
   const [pattern, setPattern] = useState<Pattern>(new Pattern());
   const [patternSize, setPatternSize] = useState<PatternSize>(
@@ -487,6 +489,9 @@ function TrianglifyPreview({
   trianglifyPattern: TrianglifyPattern;
 }) {
   const previewRef = useRef<HTMLDivElement>(null);
+  const svgMarkup = trianglifyPattern
+    .toSVGTree(trianglifySvgOptions)
+    .toString();
 
   useEffect(() => {
     const previewElement = previewRef.current;
@@ -495,7 +500,10 @@ function TrianglifyPreview({
       return;
     }
 
-    const svgElement = trianglifyPattern.toSVG({ includeNamespace: true });
+    const svgElement = trianglifyPattern.toSVG(
+      undefined,
+      trianglifySvgOptions
+    );
     previewElement.replaceChildren(svgElement);
 
     return () => {
@@ -508,6 +516,8 @@ function TrianglifyPreview({
       ref={previewRef}
       className="object-fit-contain mh-100 mw-100"
       aria-hidden="true"
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: svgMarkup }}
     />
   );
 }
