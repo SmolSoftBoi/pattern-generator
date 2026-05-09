@@ -28,6 +28,19 @@ import type { Pattern as TrianglifyPattern } from 'trianglify';
 
 const trianglifySvgOptions = { includeNamespace: true };
 
+type TrianglifyPreviewProps = {
+  trianglifyPattern: TrianglifyPattern;
+};
+
+/**
+ * Renders the Pattern editor UI and live Trianglify preview.
+ *
+ * Manages user-editable pattern state (size, palettes, gradients and foreground),
+ * keeps the Trianglify output in sync with controls, and provides actions to
+ * regenerate the pattern and download it as PNG or SVG.
+ *
+ * @returns The React element containing configuration controls and the preview.
+ */
 export default function PatternComponent() {
   const [pattern, setPattern] = useState<Pattern>(new Pattern());
   const [patternSize, setPatternSize] = useState<PatternSize>(
@@ -483,11 +496,18 @@ export default function PatternComponent() {
   );
 }
 
-function TrianglifyPreview({
-  trianglifyPattern,
-}: {
-  trianglifyPattern: TrianglifyPattern;
-}) {
+/**
+ * Renders a live SVG preview for a Trianglify pattern inside a container element.
+ *
+ * Builds static SVG markup for the first render, updates the injected SVG whenever
+ * `props.trianglifyPattern` changes, and removes the injected SVG on cleanup.
+ *
+ * @param props - `TrianglifyPreviewProps` containing the pattern used to generate
+ * the SVG
+ * @returns The React element that hosts the generated SVG preview
+ */
+function TrianglifyPreview(props: TrianglifyPreviewProps) {
+  const { trianglifyPattern } = props;
   const previewRef = useRef<HTMLDivElement>(null);
   const svgMarkup = trianglifyPattern
     .toSVGTree(trianglifySvgOptions)
