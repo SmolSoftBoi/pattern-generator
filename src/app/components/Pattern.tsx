@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Form,
   Button,
@@ -510,8 +510,8 @@ export default function PatternComponent({
 /**
  * Renders a live SVG preview for a Trianglify pattern inside a container element.
  *
- * Builds SVG markup during render so static exports include the preview while
- * React owns subsequent updates through `dangerouslySetInnerHTML`.
+ * Memoises SVG markup so static exports include the preview and the SVG string
+ * is rebuilt only when the Trianglify pattern changes.
  *
  * @param props - `TrianglifyPreviewProps` containing the pattern used to generate
  * the SVG
@@ -519,9 +519,10 @@ export default function PatternComponent({
  */
 function TrianglifyPreview(props: TrianglifyPreviewProps) {
   const { trianglifyPattern } = props;
-  const svgMarkup = trianglifyPattern
-    .toSVGTree(trianglifySvgOptions)
-    .toString();
+  const svgMarkup = useMemo(
+    () => trianglifyPattern.toSVGTree(trianglifySvgOptions).toString(),
+    [trianglifyPattern]
+  );
 
   return (
     <div

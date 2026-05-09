@@ -181,10 +181,6 @@ export class PatternSize {
 
     if (px === 0 || isNaN(px)) {
       px = toPx(`${value}`);
-
-      if (px === 0) {
-        1;
-      }
     }
 
     if (minValue) {

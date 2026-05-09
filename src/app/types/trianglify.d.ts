@@ -101,7 +101,7 @@ declare module 'trianglify' {
 }
 
 declare module 'trianglify/dist/trianglify.bundle' {
-  import trianglify = require('trianglify');
+  import trianglify from 'trianglify';
 
-  export = trianglify;
+  export default trianglify;
 }
