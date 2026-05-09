@@ -69,10 +69,15 @@ declare module 'trianglify' {
       includeNamespace: boolean;
     }
 
+    interface SVGTree {
+      toString(): string;
+    }
+
     interface Pattern {
       opts: Options;
       //polys: any;
-      toSVG(opts?: SVGOptions): SVGElement;
+      toSVGTree(opts?: SVGOptions): SVGTree;
+      toSVG(destSVG?: SVGElement, opts?: SVGOptions): SVGElement;
       toCanvas(canvas?: HTMLCanvasElement): HTMLCanvasElement;
     }
 

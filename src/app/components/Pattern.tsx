@@ -26,18 +26,20 @@ import PatternColorDropdownComponent from './PatternColorDropdown';
 
 import type { Pattern as TrianglifyPattern } from 'trianglify';
 
+const trianglifySvgOptions = { includeNamespace: true };
+
 type TrianglifyPreviewProps = {
   trianglifyPattern: TrianglifyPattern;
 };
 
 /**
- * Render the Pattern editor UI and live Trianglify preview.
+ * Renders the Pattern editor UI and live Trianglify preview.
  *
  * Manages user-editable pattern state (size, palettes, gradients and foreground),
- * keeps the trianglify output in sync with controls, and provides actions to
+ * keeps the Trianglify output in sync with controls, and provides actions to
  * regenerate the pattern and download it as PNG or SVG.
  *
- * @returns The JSX.Element containing configuration controls and the preview.
+ * @returns The React element containing configuration controls and the preview.
  */
 export default function PatternComponent() {
   const [pattern, setPattern] = useState<Pattern>(new Pattern());
@@ -495,16 +497,21 @@ export default function PatternComponent() {
 }
 
 /**
- * Render a live SVG preview for a trianglify pattern inside a container element.
+ * Renders a live SVG preview for a Trianglify pattern inside a container element.
  *
- * Inserts the pattern's SVG into an internal div, updates the SVG whenever
- * `trianglifyPattern` changes, and removes the injected SVG on cleanup.
+ * Builds static SVG markup for the first render, updates the injected SVG whenever
+ * `props.trianglifyPattern` changes, and removes the injected SVG on cleanup.
  *
- * @param trianglifyPattern - Trianglify pattern used to generate the SVG to display
- * @returns The JSX.Element that hosts the generated SVG preview
+ * @param props - `TrianglifyPreviewProps` containing the pattern used to generate
+ * the SVG
+ * @returns The React element that hosts the generated SVG preview
  */
-function TrianglifyPreview({ trianglifyPattern }: TrianglifyPreviewProps) {
+function TrianglifyPreview(props: TrianglifyPreviewProps) {
+  const { trianglifyPattern } = props;
   const previewRef = useRef<HTMLDivElement>(null);
+  const svgMarkup = trianglifyPattern
+    .toSVGTree(trianglifySvgOptions)
+    .toString();
 
   useEffect(() => {
     const previewElement = previewRef.current;
@@ -513,7 +520,10 @@ function TrianglifyPreview({ trianglifyPattern }: TrianglifyPreviewProps) {
       return;
     }
 
-    const svgElement = trianglifyPattern.toSVG({ includeNamespace: true });
+    const svgElement = trianglifyPattern.toSVG(
+      undefined,
+      trianglifySvgOptions
+    );
     previewElement.replaceChildren(svgElement);
 
     return () => {
@@ -526,6 +536,8 @@ function TrianglifyPreview({ trianglifyPattern }: TrianglifyPreviewProps) {
       ref={previewRef}
       className="object-fit-contain mh-100 mw-100"
       aria-hidden="true"
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: svgMarkup }}
     />
   );
 }
