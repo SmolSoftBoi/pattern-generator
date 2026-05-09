@@ -1,13 +1,11 @@
-import { randomUUID } from 'crypto';
-
 import PatternComponent from './components/Pattern';
 
-export default function Home() {
-  const initialSeed = randomUUID();
+const initialPatternSeed = 'pattern-generator-initial-preview';
 
+export default function Home() {
   return (
     <main>
-      <PatternComponent initialSeed={initialSeed} />
+      <PatternComponent initialSeed={initialPatternSeed} />
     </main>
   );
 }
