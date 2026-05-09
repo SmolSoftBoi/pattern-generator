@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Form,
   Button,
@@ -28,6 +28,10 @@ import type { Pattern as TrianglifyPattern } from 'trianglify';
 
 const trianglifySvgOptions = { includeNamespace: true };
 
+type PatternComponentProps = {
+  initialSeed: string;
+};
+
 type TrianglifyPreviewProps = {
   trianglifyPattern: TrianglifyPattern;
 };
@@ -39,12 +43,19 @@ type TrianglifyPreviewProps = {
  * keeps the Trianglify output in sync with controls, and provides actions to
  * regenerate the pattern and download it as PNG or SVG.
  *
+ * @param props - `PatternComponentProps` containing the seed shared by the
+ * server and client for deterministic first render
  * @returns The React element containing configuration controls and the preview.
  */
-export default function PatternComponent() {
-  const [pattern, setPattern] = useState<Pattern>(new Pattern());
+export default function PatternComponent({
+  initialSeed,
+}: PatternComponentProps) {
+  const [seed, setSeed] = useState<string>(initialSeed);
   const [patternSize, setPatternSize] = useState<PatternSize>(
-    new PatternSize(1440, 900, 600, 400)
+    () => new PatternSize(1440, 900, 600, 400)
+  );
+  const [pattern, setPattern] = useState<Pattern>(
+    () => new Pattern(patternSize, 1, seed)
   );
   const [patternXPalette, setPatternXPalette] = useState<PatternPalette>(
     new PatternPalette()
@@ -55,7 +66,7 @@ export default function PatternComponent() {
   const [patternForegroundColor, setPatternForegroundColor] =
     useState<PatternColor>(new PatternColor('white'));
   const [trianglifyPattern, setTrianglifyPattern] = useState<TrianglifyPattern>(
-    pattern.generate()
+    () => pattern.generate()
   );
   const [name, setName] = useState<string>('');
   const [width, setWidth] = useState<string>(`${patternSize.width}`);
@@ -116,7 +127,7 @@ export default function PatternComponent() {
       new Pattern(
         patternSize,
         pattern.variance,
-        pattern.seed,
+        seed,
         xColorOption,
         yColorOption,
         patternXPalette,
@@ -139,7 +150,7 @@ export default function PatternComponent() {
     yGradientType,
     foregroundColorOption,
     pattern.variance,
-    pattern.seed,
+    seed,
     xPalette,
     yPalette,
     pattern.strokeWidth,
@@ -219,7 +230,7 @@ export default function PatternComponent() {
   };
 
   const handleGenerate = () => {
-    setTrianglifyPattern(pattern.generate());
+    setSeed(crypto.randomUUID());
   };
 
   return (
@@ -401,7 +412,7 @@ export default function PatternComponent() {
                   className="btn-group-sm"
                 >
                   <ToggleButton
-                    id="yGradientType-match-x"
+                    id="yGradientType-match"
                     variant="secondary"
                     value="match"
                   >
@@ -499,8 +510,8 @@ export default function PatternComponent() {
 /**
  * Renders a live SVG preview for a Trianglify pattern inside a container element.
  *
- * Builds static SVG markup for the first render, updates the injected SVG whenever
- * `props.trianglifyPattern` changes, and removes the injected SVG on cleanup.
+ * Builds SVG markup during render so static exports include the preview while
+ * React owns subsequent updates through `dangerouslySetInnerHTML`.
  *
  * @param props - `TrianglifyPreviewProps` containing the pattern used to generate
  * the SVG
@@ -508,35 +519,14 @@ export default function PatternComponent() {
  */
 function TrianglifyPreview(props: TrianglifyPreviewProps) {
   const { trianglifyPattern } = props;
-  const previewRef = useRef<HTMLDivElement>(null);
   const svgMarkup = trianglifyPattern
     .toSVGTree(trianglifySvgOptions)
     .toString();
 
-  useEffect(() => {
-    const previewElement = previewRef.current;
-
-    if (!previewElement) {
-      return;
-    }
-
-    const svgElement = trianglifyPattern.toSVG(
-      undefined,
-      trianglifySvgOptions
-    );
-    previewElement.replaceChildren(svgElement);
-
-    return () => {
-      svgElement.remove();
-    };
-  }, [trianglifyPattern]);
-
   return (
     <div
-      ref={previewRef}
       className="object-fit-contain mh-100 mw-100"
       aria-hidden="true"
-      suppressHydrationWarning
       dangerouslySetInnerHTML={{ __html: svgMarkup }}
     />
   );
