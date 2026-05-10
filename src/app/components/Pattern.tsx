@@ -66,7 +66,7 @@ export default function PatternComponent({
   const [patternForegroundColor, setPatternForegroundColor] =
     useState<PatternColor>(new PatternColor('white'));
   const [trianglifyPattern, setTrianglifyPattern] = useState<TrianglifyPattern>(
-    () => pattern.generate()
+    () => pattern.trianglifyPattern
   );
   const [name, setName] = useState<string>('');
   const [width, setWidth] = useState<string>(`${patternSize.width}`);
@@ -92,7 +92,7 @@ export default function PatternComponent({
   );
 
   useEffect(() => {
-    setTrianglifyPattern(pattern.generate());
+    setTrianglifyPattern(pattern.trianglifyPattern);
   }, [pattern]);
 
   useEffect(() => {

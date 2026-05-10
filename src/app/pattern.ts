@@ -394,6 +394,10 @@ export default class Pattern {
     this.generate();
   }
 
+  get trianglifyPattern(): TrianglifyPattern {
+    return this._pattern ?? this.generate();
+  }
+
   generate(): TrianglifyPattern {
     const config: Options = {
       width: this.size.width,
