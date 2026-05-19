@@ -1,10 +1,12 @@
 import chroma, { Color } from 'chroma-js';
-import trianglify, {
+import trianglify from 'trianglify/dist/trianglify.bundle';
+import toPx from 'unit-to-px';
+
+import type {
   Pattern as TrianglifyPattern,
   Options,
   SVGOptions,
 } from 'trianglify';
-import toPx from 'unit-to-px';
 
 // import { getPoints } from './points';
 
@@ -179,10 +181,6 @@ export class PatternSize {
 
     if (px === 0 || isNaN(px)) {
       px = toPx(`${value}`);
-
-      if (px === 0) {
-        1;
-      }
     }
 
     if (minValue) {
@@ -396,6 +394,10 @@ export default class Pattern {
     this.generate();
   }
 
+  get trianglifyPattern(): TrianglifyPattern {
+    return this._pattern ?? this.generate();
+  }
+
   generate(): TrianglifyPattern {
     const config: Options = {
       width: this.size.width,
@@ -539,6 +541,6 @@ export default class Pattern {
   }
 
   svg(options?: SVGOptions) {
-    return this._pattern!.toSVG(options);
+    return this.trianglifyPattern.toSVG(undefined, options);
   }
 }
