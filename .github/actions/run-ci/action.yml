@@ -49,7 +49,7 @@ runs:
       run: |
         set -euo pipefail
 
-        # `canvas` is pulled in transitively (e.g., via trianglify/react-trianglify). Prebuilt
+        # `canvas` is pulled in transitively via trianglify. Prebuilt
         # binaries are not always available for all Node versions, so it may fall back to a
         # source build during `yarn install`. Install the native dependencies up-front.
         sudo apt-get update

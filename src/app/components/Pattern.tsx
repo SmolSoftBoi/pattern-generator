@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Form,
   Button,
@@ -10,8 +10,6 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from 'react-bootstrap';
-import Trianglify from 'react-trianglify';
-import { Pattern as TrianglifyPattern } from 'trianglify';
 
 import Pattern, {
   PatternColor,
@@ -26,10 +24,38 @@ import Pattern, {
 
 import PatternColorDropdownComponent from './PatternColorDropdown';
 
-export default function PatternComponent() {
-  const [pattern, setPattern] = useState<Pattern>(new Pattern());
+import type { Pattern as TrianglifyPattern } from 'trianglify';
+
+const trianglifySvgOptions = { includeNamespace: true };
+
+type PatternComponentProps = {
+  initialSeed: string;
+};
+
+type TrianglifyPreviewProps = {
+  trianglifyPattern: TrianglifyPattern;
+};
+
+/**
+ * Renders the Pattern editor UI and live Trianglify preview.
+ *
+ * Manages user-editable pattern state (size, palettes, gradients and foreground),
+ * keeps the Trianglify output in sync with controls, and provides actions to
+ * regenerate the pattern and download it as PNG or SVG.
+ *
+ * @param props - `PatternComponentProps` containing the seed shared by the
+ * server and client for deterministic first render
+ * @returns The React element containing configuration controls and the preview.
+ */
+export default function PatternComponent({
+  initialSeed,
+}: PatternComponentProps) {
+  const [seed, setSeed] = useState<string>(initialSeed);
   const [patternSize, setPatternSize] = useState<PatternSize>(
-    new PatternSize(1440, 900, 600, 400)
+    () => new PatternSize(1440, 900, 600, 400)
+  );
+  const [pattern, setPattern] = useState<Pattern>(
+    () => new Pattern(patternSize, 1, seed)
   );
   const [patternXPalette, setPatternXPalette] = useState<PatternPalette>(
     new PatternPalette()
@@ -40,7 +66,7 @@ export default function PatternComponent() {
   const [patternForegroundColor, setPatternForegroundColor] =
     useState<PatternColor>(new PatternColor('white'));
   const [trianglifyPattern, setTrianglifyPattern] = useState<TrianglifyPattern>(
-    pattern.generate()
+    () => pattern.trianglifyPattern
   );
   const [name, setName] = useState<string>('');
   const [width, setWidth] = useState<string>(`${patternSize.width}`);
@@ -66,7 +92,7 @@ export default function PatternComponent() {
   );
 
   useEffect(() => {
-    setTrianglifyPattern(pattern.generate());
+    setTrianglifyPattern(pattern.trianglifyPattern);
   }, [pattern]);
 
   useEffect(() => {
@@ -101,7 +127,7 @@ export default function PatternComponent() {
       new Pattern(
         patternSize,
         pattern.variance,
-        pattern.seed,
+        seed,
         xColorOption,
         yColorOption,
         patternXPalette,
@@ -124,7 +150,7 @@ export default function PatternComponent() {
     yGradientType,
     foregroundColorOption,
     pattern.variance,
-    pattern.seed,
+    seed,
     xPalette,
     yPalette,
     pattern.strokeWidth,
@@ -204,7 +230,7 @@ export default function PatternComponent() {
   };
 
   const handleGenerate = () => {
-    setTrianglifyPattern(pattern.generate());
+    setSeed(crypto.randomUUID());
   };
 
   return (
@@ -386,9 +412,9 @@ export default function PatternComponent() {
                   className="btn-group-sm"
                 >
                   <ToggleButton
-                    id="yGradientType-match-x"
+                    id="yGradientType-match"
                     variant="secondary"
-                    value="match-x"
+                    value="match"
                   >
                     <span className="icon icon-link">🔗</span> Match X
                   </ToggleButton>
@@ -474,23 +500,40 @@ export default function PatternComponent() {
         </Col>
 
         <Col className="preview preview-inset flex-column overflow-scroll">
-          <div className="object-fit-contain mh-100 mw-100">
-            <Trianglify
-              width={trianglifyPattern.opts.width}
-              height={trianglifyPattern.opts.height}
-              cellSize={trianglifyPattern.opts.cellSize}
-              variance={trianglifyPattern.opts.variance}
-              seed={trianglifyPattern.opts.seed}
-              xColors={trianglifyPattern.opts.xColors}
-              yColors={trianglifyPattern.opts.yColors}
-              colorSpace={trianglifyPattern.opts.colorSpace}
-              colorFunction={trianglifyPattern.opts.colorFunction}
-              strokeWidth={trianglifyPattern.opts.strokeWidth}
-              points={trianglifyPattern.opts.points}
-            />
-          </div>
+          <TrianglifyPreview trianglifyPattern={trianglifyPattern} />
         </Col>
       </Row>
     </Container>
+  );
+}
+
+/**
+ * Renders a live SVG preview for a Trianglify pattern inside a container element.
+ *
+ * Memoises the SVG data URI so static exports include the preview and the SVG
+ * string is rebuilt only when the Trianglify pattern changes.
+ *
+ * @param props - `TrianglifyPreviewProps` containing the pattern used to generate
+ * the SVG
+ * @returns The React element that hosts the generated SVG preview
+ */
+function TrianglifyPreview(props: TrianglifyPreviewProps) {
+  const { trianglifyPattern } = props;
+  const svgSource = useMemo(
+    () =>
+      `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+        trianglifyPattern.toSVGTree(trianglifySvgOptions).toString()
+      )}`,
+    [trianglifyPattern]
+  );
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- The preview uses a generated SVG data URI that next/image cannot optimise.
+    <img
+      className="object-fit-contain mh-100 mw-100"
+      aria-hidden="true"
+      alt=""
+      src={svgSource}
+    />
   );
 }
