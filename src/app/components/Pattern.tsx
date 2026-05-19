@@ -510,8 +510,8 @@ export default function PatternComponent({
 /**
  * Renders a live SVG preview for a Trianglify pattern inside a container element.
  *
- * Memoises SVG markup so static exports include the preview and the SVG string
- * is rebuilt only when the Trianglify pattern changes.
+ * Memoises the SVG data URI so static exports include the preview and the SVG
+ * string is rebuilt only when the Trianglify pattern changes.
  *
  * @param props - `TrianglifyPreviewProps` containing the pattern used to generate
  * the SVG
@@ -519,16 +519,21 @@ export default function PatternComponent({
  */
 function TrianglifyPreview(props: TrianglifyPreviewProps) {
   const { trianglifyPattern } = props;
-  const svgMarkup = useMemo(
-    () => trianglifyPattern.toSVGTree(trianglifySvgOptions).toString(),
+  const svgSource = useMemo(
+    () =>
+      `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+        trianglifyPattern.toSVGTree(trianglifySvgOptions).toString()
+      )}`,
     [trianglifyPattern]
   );
 
   return (
-    <div
+    // eslint-disable-next-line @next/next/no-img-element -- The preview uses a generated SVG data URI that next/image cannot optimise.
+    <img
       className="object-fit-contain mh-100 mw-100"
       aria-hidden="true"
-      dangerouslySetInnerHTML={{ __html: svgMarkup }}
+      alt=""
+      src={svgSource}
     />
   );
 }
