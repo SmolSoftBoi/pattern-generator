@@ -541,6 +541,6 @@ export default class Pattern {
   }
 
   svg(options?: SVGOptions) {
-    return this._pattern!.toSVG(undefined, options);
+    return this.trianglifyPattern.toSVG(undefined, options);
   }
 }
