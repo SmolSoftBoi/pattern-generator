@@ -12,6 +12,9 @@ on:
       - '.github/dependabot.yml'
       - '.yamllint.yml'
 
+permissions:
+  contents: read
+
 jobs:
   yamllint:
     runs-on: ubuntu-latest
