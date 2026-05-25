@@ -37,7 +37,7 @@
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
-    "sass": "^1.99.0",
+    "sass": "^1.100.0",
     "typescript": "^5"
   },
   "prettier": "@smolpack/prettier-config"
