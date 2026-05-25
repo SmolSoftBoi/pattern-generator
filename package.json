@@ -26,7 +26,7 @@
     "@smolpack/prettier-config": "^1.0.5",
     "@types/chroma-js": "^2.4.4",
     "@types/colorbrewer": "^1.6.0",
-    "@types/node": "^20",
+    "@types/node": "^25",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@typescript-eslint/eslint-plugin": "8.59.4",
