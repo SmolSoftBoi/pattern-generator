@@ -29,7 +29,7 @@
     "@types/node": "^25",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@typescript-eslint/eslint-plugin": "8.59.4",
+    "@typescript-eslint/eslint-plugin": "8.60.1",
     "eslint": "^8.57.0",
     "eslint-config-next": "15.5.18",
     "eslint-config-prettier": "^9.1.0",
@@ -37,7 +37,7 @@
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
-    "sass": "^1.99.0",
+    "sass": "^1.100.0",
     "typescript": "^5"
   },
   "prettier": "@smolpack/prettier-config"
