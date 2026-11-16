@@ -6,52 +6,26 @@
 name: Mark stale issues and pull requests
 
 on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/stale.yml'
   schedule:
     - cron: '42 17 * * *'
 
-env:
-  # actions/stale@v11 runs on Node.js 24 and therefore requires a sufficiently new runner.
-  REQUIRED_RUNNER_VERSION: '2.327.1'
-
 jobs:
   stale:
-    # actions/stale@v11 runs on Node.js 24 and requires GitHub Actions runner >= REQUIRED_RUNNER_VERSION.
-    # Pin to a modern GitHub-hosted image (instead of ubuntu-latest) to avoid accidentally
-    # running on older runner images.
+    # GitHub maintains the runner version on this hosted image.
     runs-on: ubuntu-22.04
     permissions:
-      issues: write
-      pull-requests: write
+      issues: read
+      pull-requests: read
 
     steps:
-      - name: Verify GitHub Actions runner version
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          required="${REQUIRED_RUNNER_VERSION}"
-          current="${RUNNER_VERSION:-}"
-
-          # Use GitHub Actions error annotation syntax (::error ...) so setup failures are clearly surfaced in the UI.
-          if [[ -z "$current" ]]; then
-            msg="RUNNER_VERSION env var is not set. "
-            msg+="actions/stale@v11 requires runner v${required}+ (Node.js 24). "
-            msg+="If you are using self-hosted runners, ensure they are updated to v${required}+ before enabling this workflow."
-            echo "::error title=Unknown runner version::${msg}"
-            exit 1
-          fi
-
-          if [[ "$(printf '%s\n%s\n' "$required" "$current" | sort -V | head -n1)" != "$required" ]]; then
-            msg="GitHub Actions runner v${required}+ is required for actions/stale@v11 (Node.js 24). "
-            msg+="Current runner: v${current}."
-            echo "::error title=Runner too old::${msg}"
-            exit 1
-          fi
-
-          echo "Runner version OK: v${current} (required v${required}+)"
-
       - uses: actions/stale@v11
         with:
+          # Keep all runs non-mutating until the dry-run results are reviewed.
+          debug-only: true
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           stale-issue-message: 'This issue has been inactive for a while. Please update the issue if it is still relevant.'
           stale-pr-message: 'This pull request has been inactive for a while. Please update the pull request if it is still relevant.'
